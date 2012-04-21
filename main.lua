@@ -86,8 +86,11 @@ function loadResources()
 	imgSky = love.graphics.newImage("gfx/sky.png")
 	imgSky:setFilter("nearest","nearest")
 	
-	imgPauseScreen = love.graphics.newImage("gfx/pauseScreen.png")
+	imgPauseScreen = love.graphics.newImage("gfx/PauseScreen.png")
 	imgPauseScreen:setFilter("nearest","nearest")
+	
+	imgHumans = love.graphics.newImage("gfx/humantest.png")
+	imgHumans:setFilter("nearest","nearest")
 
 
 	-- Load sound effects
@@ -148,6 +151,11 @@ function restart()
 	citiesLife = {}
 	cityCount = 0
 	cityTimer = 2.5
+	
+	--Humans handling
+	humans = {}
+	humanSpeeds = {}
+	humanCount = 0
 end
 
 
@@ -179,9 +187,11 @@ function love.draw()
 		end
 	end
 	
-	--TODO: Draw citizens
 	
-	
+	--Draw humans
+	for i,human in ipairs(humans) do
+		love.graphics.draw( imgHumans, screenmiddlewidth, yRef, math.rad(rotation*360)+human, 1, 1, imgHumans:getWidth()/2, imgHumans:getHeight() + yRef-screenmiddleheight-65)		
+	end
 	
 	--Draw mac!
 	if direction == 1 then
@@ -361,11 +371,17 @@ function love.update(dt)
 		--Check if a city has to be created
 		cityTimer = cityTimer - dt
 		
-		if cityTimer < 0 and cityCount < 5 then
+		if cityTimer < 0 then 
 			cityTimer = 5.0
-			createCity()
-			cityCount = cityCount + 1
+			if cityCount < 5 then
+				createCity()
+				cityCount = cityCount + 1
+			end
 		end
+		
+		--update human's locations
+		updateHumans()
+		
 		
 	end
 
@@ -400,6 +416,16 @@ end
 function townClean()
 	for i,city in ipairs(cities) do
 			if citiesLife[i] == 0 then
+			
+				--Create humans!
+				for d = 0, 10, 1 do
+					if humanCount < 80 then
+						createHuman(cities[i])
+						humanCount = humanCount + 1
+					end
+				end
+				
+				--Erase city
 				table.remove(cities,i)
 				table.remove(citiesLife,i)
 				cityCount = cityCount - 1
@@ -430,5 +456,20 @@ function createCity()
 
 	--Add to city life list
 	table.insert(citiesLife,3)
+
+end
+
+--Create a puny human running for its life
+function createHuman(location)
+	table.insert(humans,location)
+	table.insert(humanSpeeds,math.random(-100,100)/200)
+end
+
+--update human's locations
+function updateHumans()
+
+	for i,human in ipairs(humans) do
+		humans[i] = (humans[i]+humanSpeeds[i]*math.rad(0.6)) % math.rad(360)
+	end
 
 end
