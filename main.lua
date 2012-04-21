@@ -1,5 +1,4 @@
 
-ang = 0
 
 WIDTH = 300
 HEIGHT = 200
@@ -74,6 +73,22 @@ ghostFrames[1] = love.graphics.newQuad(13,0,15,26,55,26)
 ghostFrames[2] = love.graphics.newQuad(27,0,15,26,55,26)
 ghostFrames[3] = love.graphics.newQuad(41,0,14,26,55,26)
 
+cityCreateFrames = {}
+
+cityCreateFrames[0] = love.graphics.newQuad(0,0,97,91,493,91)
+cityCreateFrames[1] = love.graphics.newQuad(99,0,97,91,493,91)
+cityCreateFrames[2] = love.graphics.newQuad(198,0,97,91,493,91)
+cityCreateFrames[3] = love.graphics.newQuad(297,0,97,91,493,91)
+cityCreateFrames[4] = love.graphics.newQuad(396,0,97,91,493,91)
+
+cityDestroyFrames = {}
+
+cityDestroyFrames[4] = love.graphics.newQuad(0,0,97,91,493,91)
+cityDestroyFrames[3] = love.graphics.newQuad(99,0,97,91,493,91)
+cityDestroyFrames[2] = love.graphics.newQuad(198,0,97,91,493,91)
+cityDestroyFrames[1] = love.graphics.newQuad(297,0,97,91,493,91)
+cityDestroyFrames[0] = love.graphics.newQuad(396,0,97,91,493,91)
+
 function love.load()
 
 	love.graphics.setBackgroundColor(bgcolor)
@@ -136,6 +151,11 @@ function loadResources()
 	imgGhosts = love.graphics.newImage("gfx/ghostframes.png")
 	imgGhosts:setFilter("nearest","nearest")
 
+	imgCityCreate = love.graphics.newImage("gfx/citycreateframes.png")
+	imgCityCreate:setFilter("nearest","nearest")
+	
+	imgCityDestroy = love.graphics.newImage("gfx/citydestroyframes.png")
+	imgCityDestroy:setFilter("nearest","nearest")
 
 	-- Load sound effects
 	auJump = love.audio.newSource("sfx/jump.wav","static")
@@ -193,6 +213,7 @@ function restart()
 	--City handling
 	cities = {}
 	citiesLife = {}
+	citiesFrames = {}
 	cityCount = 0
 	cityTimer = 2.5
 	
@@ -205,6 +226,10 @@ function restart()
 	--Ghosts handling
 	ghosts = {}
 	ghostHeights = {}
+	
+	--Cities destruction handling
+	dcities = {}
+	dcitiesFrames = {}
 end
 
 
@@ -224,11 +249,19 @@ function love.draw()
 	--Draw the background
 	love.graphics.draw( imgBackground, screenmiddlewidth, yRef, math.rad(rotation*360), worldSize, worldSize, imgBackground:getWidth()/2, imgBackground:getHeight()/2 )
 	
+	--Draw destroyed cities
+	for i,dcity in ipairs(dcities) do
+		love.graphics.drawq( imgCityDestroy, cityDestroyFrames[math.floor(dcitiesFrames[i]/5)], screenmiddlewidth, yRef, math.rad(rotation*360)+dcity, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
+	end
 	
 	--Draw cities
 	for i,city in ipairs(cities) do
 		if (citiesLife[i] == 3) then
-			love.graphics.draw( imgCity, screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
+			if(citiesFrames[i] < 15) then
+				love.graphics.drawq( imgCityCreate, cityCreateFrames[math.floor(citiesFrames[i]/5)], screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
+			else
+				love.graphics.draw( imgCity, screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
+			end
 		elseif (citiesLife[i] == 2) then 
 			love.graphics.draw( imgCityDamaged, screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
 		else
@@ -275,11 +308,6 @@ function love.draw()
 		love.graphics.draw( imgPauseScreen, 0, 0 )
 	end
 
-		--Check for endgame condition
-		if worldSize < 0.12 then
-			love.graphics.print("endgame!", 200, 200)
-		end
-			love.graphics.print(citiesToBuild, 200, 250)
 end
 
 function love.keypressed(key,unicode)
@@ -455,8 +483,15 @@ function love.update(dt)
 		
 		--update human's locations
 		updateHumans()
+		
 		--update human's locations
 		updateGhosts()
+	
+		--update human's locations
+		updateDCities()
+
+		--update cities
+		updateCities()
 		
 		--Check for endgame condition
 		if worldSize < 0.13 then
@@ -471,6 +506,7 @@ end
 function initEndGame()
 	
 	for i,human in ipairs(humans) do
+		death(human)
 		table.remove(humans, i)
 		table.remove(humanSpeeds, i)
 		table.remove(humanColors, i)
@@ -480,8 +516,10 @@ function initEndGame()
 		
 	for i,city in ipairs(cities) do
 		--Erase city
+		destroyCity(city)
 		table.remove(cities,i)
 		table.remove(citiesLife,i)
+		table.remove(citiesFrames,i)
 		cityCount = cityCount - 1
 		auDestroy:stop() auDestroy:play()
 	end
@@ -527,8 +565,10 @@ function townClean()
 			end
 			
 			--Erase city
+			destroyCity(city)
 			table.remove(cities,i)
 			table.remove(citiesLife,i)
+			table.remove(citiesFrames,i)
 			cityCount = cityCount - 1
 			auDestroy:stop() auDestroy:play()
 		end
@@ -547,6 +587,34 @@ function townAttack()
 	
 end
 
+function updateCities()
+	
+	for i,frame in ipairs(citiesFrames) do
+		if citiesFrames[i] < 16 then
+			citiesFrames[i] = frame+1
+		end
+	end
+	
+end
+
+function destroyCity(city)
+
+	table.insert(dcities, city)
+	table.insert(dcitiesFrames, 0)
+
+end 
+
+function updateDCities()
+	for i,frame in ipairs(dcitiesFrames) do
+		if dcitiesFrames[i] < 16 then
+			dcitiesFrames[i] = frame+1
+		else
+			table.remove(dcities, i)
+			table.remove(dcitiesFrames, i)
+		end
+	end
+end
+
 --Create a new city
 function createCity()
 	--Create a random location for the city
@@ -558,6 +626,8 @@ function createCity()
 	--Add to city life list
 	table.insert(citiesLife,3)
 
+	--Add to frameslist
+	table.insert(citiesFrames,0)
 end
 
 --Create a puny human running for its life
