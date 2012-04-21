@@ -1,4 +1,6 @@
 
+ang = 0
+
 WIDTH = 300
 HEIGHT = 200
 SCALE = 3
@@ -35,13 +37,52 @@ macFrames[6] = love.graphics.newQuad(481,0,78,106,719,106)
 macFrames[7] = love.graphics.newQuad(561,0,78,106,719,106)
 macFrames[8] = love.graphics.newQuad(641,0,78,106,719,106)
 
+humanFrames = {}
+
+humanFrames[0] = love.graphics.newQuad(0,0,30,43,183,174)
+humanFrames[1] = love.graphics.newQuad(30,0,31,43,183,174)
+humanFrames[2] = love.graphics.newQuad(61,0,31,43,183,174)
+humanFrames[3] = love.graphics.newQuad(91,0,31,43,183,174)
+humanFrames[4] = love.graphics.newQuad(122,0,31,43,183,174)
+humanFrames[5] = love.graphics.newQuad(152,0,31,43,183,174)
+
+humanFrames[6] = love.graphics.newQuad(0,43,30,43,183,174)
+humanFrames[7] = love.graphics.newQuad(30,43,31,43,183,174)
+humanFrames[8] = love.graphics.newQuad(61,43,31,43,183,174)
+humanFrames[9] = love.graphics.newQuad(91,43,31,43,183,174)
+humanFrames[10] = love.graphics.newQuad(122,43,31,43,183,174)
+humanFrames[11] = love.graphics.newQuad(152,43,31,43,183,174)
+
+humanFrames[12] = love.graphics.newQuad(0,87,30,43,183,174)
+humanFrames[13] = love.graphics.newQuad(30,87,31,43,183,174)
+humanFrames[14] = love.graphics.newQuad(61,87,31,43,183,174)
+humanFrames[15] = love.graphics.newQuad(91,87,31,43,183,174)
+humanFrames[16] = love.graphics.newQuad(122,87,31,43,183,174)
+humanFrames[17] = love.graphics.newQuad(152,87,31,43,183,174)
+
+humanFrames[18] = love.graphics.newQuad(0,131,30,43,183,174)
+humanFrames[19] = love.graphics.newQuad(30,131,31,43,183,174)
+humanFrames[20] = love.graphics.newQuad(61,131,31,43,183,174)
+humanFrames[21] = love.graphics.newQuad(91,131,31,43,183,174)
+humanFrames[22] = love.graphics.newQuad(122,131,31,43,183,174)
+humanFrames[23] = love.graphics.newQuad(152,131,31,43,183,174)
+
+ghostFrames = {}
+
+ghostFrames[0] = love.graphics.newQuad(0,0,14,26,55,26)
+ghostFrames[1] = love.graphics.newQuad(13,0,15,26,55,26)
+ghostFrames[2] = love.graphics.newQuad(27,0,15,26,55,26)
+ghostFrames[3] = love.graphics.newQuad(41,0,14,26,55,26)
+
 function love.load()
 
 	love.graphics.setBackgroundColor(bgcolor)
 
 	loadHighscore()
 	loadResources()
-
+	
+	math.randomseed( os.time() )
+	
 	updateScale()
 	restart()
 
@@ -89,8 +130,11 @@ function loadResources()
 	imgPauseScreen = love.graphics.newImage("gfx/PauseScreen.png")
 	imgPauseScreen:setFilter("nearest","nearest")
 	
-	imgHumans = love.graphics.newImage("gfx/humantest.png")
+	imgHumans = love.graphics.newImage("gfx/humanframes.png")
 	imgHumans:setFilter("nearest","nearest")
+
+	imgGhosts = love.graphics.newImage("gfx/ghostframes.png")
+	imgGhosts:setFilter("nearest","nearest")
 
 
 	-- Load sound effects
@@ -144,7 +188,7 @@ function restart()
 	canquit = false
 	yspeed = 1
 	currentMacFrame = 0
-	
+	currentHumanFrame = 0
 	
 	--City handling
 	cities = {}
@@ -155,7 +199,12 @@ function restart()
 	--Humans handling
 	humans = {}
 	humanSpeeds = {}
+	humanColors = {}
 	humanCount = 0
+	
+	--Ghosts handling
+	ghosts = {}
+	ghostHeights = {}
 end
 
 
@@ -188,9 +237,9 @@ function love.draw()
 	end
 	
 	
-	--Draw humans
+	--Draw humans :D
 	for i,human in ipairs(humans) do
-		love.graphics.draw( imgHumans, screenmiddlewidth, yRef, math.rad(rotation*360)+human, 1, 1, imgHumans:getWidth()/2, imgHumans:getHeight() + yRef-screenmiddleheight-65)		
+		love.graphics.drawq( imgHumans, humanFrames[math.floor(currentHumanFrame)+6*humanColors[i]], screenmiddlewidth, yRef, math.rad(rotation*360)+human, 1, 1, 15, 43 + yRef-screenmiddleheight-65)		
 	end
 	
 	--Draw mac!
@@ -213,11 +262,24 @@ function love.draw()
 	--Draw the foreground
 	love.graphics.draw( imgForeground, screenmiddlewidth, yRef, math.rad(rotation*360), worldSize, worldSize, imgBackground:getWidth()/2, imgBackground:getHeight()/2 )
 	
+	
+	
+	--Draw the ghosts
+	for i,ghost in ipairs(ghosts) do
+		love.graphics.drawq( imgGhosts, ghostFrames[math.floor(ghostHeights[i]/6)], screenmiddlewidth, yRef+7-ghostHeights[i], math.rad(rotation*360)+ghost, 1, 1, 15, 43 + yRef-screenmiddleheight-65)		
+	end
+	
+
 	--Draw the pause screen
 	if gamestate == 2 then
 		love.graphics.draw( imgPauseScreen, 0, 0 )
 	end
 
+		--Check for endgame condition
+		if worldSize < 0.12 then
+			love.graphics.print("endgame!", 200, 200)
+		end
+			love.graphics.print(citiesToBuild, 200, 250)
 end
 
 function love.keypressed(key,unicode)
@@ -273,6 +335,8 @@ function love.update(dt)
 		--Update frame for character animation
 		
 		currentMacFrame = (currentMacFrame + 18*dt) % 9
+		
+		currentHumanFrame = (currentHumanFrame + 25*dt) % 6
 		
 		moving = false
 		
@@ -371,9 +435,19 @@ function love.update(dt)
 		--Check if a city has to be created
 		cityTimer = cityTimer - dt
 		
+		if worldSize > 0.25 then
+			citiesToBuild = 5
+		elseif worldSize > 0.14 then	
+			citiesToBuild = 3
+		elseif worldSize > 0.13 then	
+			citiesToBuild = 1
+		else 
+			citiesToBuild = 0
+		end
+		
 		if cityTimer < 0 then 
 			cityTimer = 5.0
-			if cityCount < 5 then
+			if cityCount < citiesToBuild then
 				createCity()
 				cityCount = cityCount + 1
 			end
@@ -381,12 +455,39 @@ function love.update(dt)
 		
 		--update human's locations
 		updateHumans()
+		--update human's locations
+		updateGhosts()
 		
+		--Check for endgame condition
+		if worldSize < 0.13 then
+			initEndGame()
+		end
 		
 	end
 
 
 end
+
+function initEndGame()
+	
+	for i,human in ipairs(humans) do
+		table.remove(humans, i)
+		table.remove(humanSpeeds, i)
+		table.remove(humanColors, i)
+		humanCount = humanCount -1
+		auEat:stop() auEat:play()
+	end
+		
+	for i,city in ipairs(cities) do
+		--Erase city
+		table.remove(cities,i)
+		table.remove(citiesLife,i)
+		cityCount = cityCount - 1
+		auDestroy:stop() auDestroy:play()
+	end
+	
+end
+
 
 --Check for collisions when walking to the right
 function townCollitionRight()
@@ -415,24 +516,24 @@ end
 --Clean up destroyed towns
 function townClean()
 	for i,city in ipairs(cities) do
-			if citiesLife[i] == 0 then
-			
-				--Create humans!
-				for d = 0, 10, 1 do
-					if humanCount < 80 then
-						createHuman(cities[i])
-						humanCount = humanCount + 1
-					end
-				end
-				
-				--Erase city
-				table.remove(cities,i)
-				table.remove(citiesLife,i)
-				cityCount = cityCount - 1
-				auDestroy:stop() auDestroy:play()
+		if citiesLife[i] == 0 then
+		
+		--Create humans!
+			for d = 0, 15, 1 do
+				if humanCount < 120 then
+					createHuman(cities[i])
+					humanCount = humanCount + 1
+				end	
 			end
+			
+			--Erase city
+			table.remove(cities,i)
+			table.remove(citiesLife,i)
+			cityCount = cityCount - 1
+			auDestroy:stop() auDestroy:play()
 		end
 	end
+end
 
 --Check if a town is being attacked
 function townAttack()
@@ -461,15 +562,59 @@ end
 
 --Create a puny human running for its life
 function createHuman(location)
-	table.insert(humans,location)
-	table.insert(humanSpeeds,math.random(-100,100)/200)
+	speed = math.random(-100,100)/200
+	
+	table.insert(humanSpeeds,speed)
+	
+	if(speed > 0) then
+		table.insert(humans,location+math.rad(3.2))
+	else
+		table.insert(humans,location-math.rad(3.2))
+	end
+	
+	table.insert(humanColors,math.random(0,3))
+end
+
+--Start Ghost Animation at location
+function death(location)
+	
+	table.insert(ghosts,location)
+	table.insert(ghostHeights,0)
+	
+end
+
+--Continue or finish Ghost Animation at location
+function updateGhosts()
+	
+	for i,ghost in ipairs(ghosts) do
+		ghostHeights[i] = ghostHeights[i] + 1
+		if ghostHeights[i] > 23 then
+			table.remove(ghosts, i)
+			table.remove(ghostHeights, i)
+		end
+	end
+	
 end
 
 --update human's locations
 function updateHumans()
 
 	for i,human in ipairs(humans) do
-		humans[i] = (humans[i]+humanSpeeds[i]*math.rad(0.6)) % math.rad(360)
+
+		humans[i] = (humans[i]+(humanSpeeds[i]*(2-worldSize))*math.rad(0.6)) % math.rad(360)
+	
+		ang =( math.rad(rotation*360)+math.abs(humans[i]) ) % math.rad(360)
+		
+		if( ang < math.rad(1) and math.rad(359)-ang > math.rad(358) and not jumping) then
+			death(humans[i])
+			
+			table.remove(humans, i)
+			table.remove(humanSpeeds, i)
+			table.remove(humanColors, i)
+			humanCount = humanCount -1
+			auEat:stop() auEat:play()
+			worldSize = worldSize - 0.006*(worldSize)
+		end
 	end
 
 end
