@@ -69,13 +69,13 @@ function loadResources()
 	
 	imgCity = love.graphics.newImage("gfx/city.png")
 	imgCity:setFilter("nearest","nearest")
+	
+	imgCityDamaged = love.graphics.newImage("gfx/city-damaged.png")
+	imgCity:setFilter("nearest","nearest")
+	
+	imgCityDestroyed = love.graphics.newImage("gfx/city-destroyed.png")
+	imgCity:setFilter("nearest","nearest")
 
-	imgMacLeft = love.graphics.newImage("gfx/macl.png")
-	imgMacLeft:setFilter("nearest","nearest")
-	
-	imgMacRight = love.graphics.newImage("gfx/macr.png")
-	imgMacRight:setFilter("nearest","nearest")
-	
 	imgMacRF = love.graphics.newImage("gfx/macrframes.png")
 	imgMacRF:setFilter("nearest","nearest")
 	
@@ -172,26 +172,17 @@ function love.draw()
 	
 	--TODO: Draw cities
 	for i,city in ipairs(cities) do
-		love.graphics.draw( imgCity, screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
+		if (citiesLife[i] == 3) then
+			love.graphics.draw( imgCity, screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
+		elseif (citiesLife[i] == 2) then 
+			love.graphics.draw( imgCityDamaged, screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
+		else
+			love.graphics.draw( imgCityDestroyed, screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
+		end
 	end
 	
 	--TODO: Draw citizens
 	
-	
-	love.graphics.print( macy , 400, 500)
-	
-	
-	if goingDown then
-		love.graphics.print( "going down!" , 400, 100)
-	end
-	
-	if attacking then
-		love.graphics.print( "attacking!" , 400, 150)
-	end
-	
-	if jumping then
-		love.graphics.print( "jumping!" , 400, 200)
-	end
 	
 	
 	--Draw mac!
@@ -322,6 +313,7 @@ function love.update(dt)
 			yspeed = 0
 			attacking = false
 			jumping = false
+			townClean()
 		end
 		
 		
@@ -371,7 +363,7 @@ function love.update(dt)
 		cityTimer = cityTimer - dt
 		
 		if cityTimer < 0 and cityCount < 5 then
-			cityTimer = 8.0
+			cityTimer = 5.0
 			createCity()
 			cityCount = cityCount + 1
 		end
@@ -405,16 +397,23 @@ function townCollitionLeft()
 end
 
 
-function townAttack()
+function townClean()
+
 
 	for i,city in ipairs(cities) do
-		if (math.rad(rotation*360)+city)%math.rad(360) > math.rad(355.5) or (math.rad(rotation*360)+city)%math.rad(360) < math.rad(4.5) then
-			citiesLife[i] = citiesLife[i]-1
 			if citiesLife[i] == 0 then
 				table.remove(cities,i)
 				table.remove(citiesLife,i)
 				cityCount = cityCount - 1
 			end
+		end
+	end
+
+function townAttack()
+
+	for i,city in ipairs(cities) do
+		if (math.rad(rotation*360)+city)%math.rad(360) > math.rad(355.5) or (math.rad(rotation*360)+city)%math.rad(360) < math.rad(4.5) then
+			citiesLife[i] = citiesLife[i]-1
 		end
 	end
 	
