@@ -1,14 +1,14 @@
 LD23 : Disregard All Humans
 ====
 
-A repo to hold my Ludum Dare 23 Entry, which I've named Disregard All Humans. 
+A repo to hold my Ludum Dare 23 Entry, which I've named **Disregard All Humans**, after the original competition's theme, "*Tiny World*". 
 Destroy cities, eat humans and grow large enough to consume the earth! 
 
 It shouldn't take you too long to get through the whole thing :)
 
 **This is a work in progress!**
 
-Credits
+About Ludum Dare
 ====
 
 About the Ludum Dare (from Wikipedia):
