@@ -22,9 +22,7 @@ use_music = true
 
 gamestate = 1
 
-
 --load assets and initialize values
-
 
 macFrames = {}
 macFrames[0] = love.graphics.newQuad(0,0,78,106,719,106)
@@ -93,17 +91,17 @@ function loadResources()
 
 
 	-- Load sound effects
-	--auCoffee = love.audio.newSource("sfx/coffee.wav","static")
-	--auHit = love.audio.newSource("sfx/hit.wav","static")
-	--auSelect = love.audio.newSource("sfx/select.wav","static")
+	auJump = love.audio.newSource("sfx/jump.wav","static")
+	auAttack = love.audio.newSource("sfx/attack.wav","static")
+	auDestroy = love.audio.newSource("sfx/destroy.wav","static")
+	auEat = love.audio.newSource("sfx/eat.wav","static")
 	
 	if use_music == true then
-	--	auBGM = love.audio.newSource("sfx/bgm.ogg","stream")
-	--	auBGM:setLooping(true)
-	--	auBGM:setVolume(0.6)
-	--	auBGM:play()
+		auBGM = love.audio.newSource("sfx/bu-ninjas.wav","stream")
+		auBGM:setLooping(true)
+		auBGM:setVolume(0.8)
+		auBGM:play()
 	end
-
 
 end
 
@@ -170,7 +168,7 @@ function love.draw()
 	love.graphics.draw( imgBackground, screenmiddlewidth, yRef, math.rad(rotation*360), worldSize, worldSize, imgBackground:getWidth()/2, imgBackground:getHeight()/2 )
 	
 	
-	--TODO: Draw cities
+	--Draw cities
 	for i,city in ipairs(cities) do
 		if (citiesLife[i] == 3) then
 			love.graphics.draw( imgCity, screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
@@ -283,6 +281,7 @@ function love.update(dt)
 		
 		--Jumping logic
 		if love.keyboard.isDown(" ") and jumping == false then
+			auJump:stop() auJump:play()
 			yspeed = JUMP_POWER
 			jumping = true
 			attacking = true
@@ -373,7 +372,7 @@ function love.update(dt)
 
 end
 
-
+--Check for collisions when walking to the right
 function townCollitionRight()
  
 	for i,city in ipairs(cities) do
@@ -385,6 +384,7 @@ function townCollitionRight()
 	
 end
 
+--Check for collisions when walking to the left
 function townCollitionLeft()
  
 	for i,city in ipairs(cities) do
@@ -396,31 +396,32 @@ function townCollitionLeft()
 	
 end
 
-
+--Clean up destroyed towns
 function townClean()
-
-
 	for i,city in ipairs(cities) do
 			if citiesLife[i] == 0 then
 				table.remove(cities,i)
 				table.remove(citiesLife,i)
 				cityCount = cityCount - 1
+				auDestroy:stop() auDestroy:play()
 			end
 		end
 	end
 
+--Check if a town is being attacked
 function townAttack()
 
 	for i,city in ipairs(cities) do
 		if (math.rad(rotation*360)+city)%math.rad(360) > math.rad(355.5) or (math.rad(rotation*360)+city)%math.rad(360) < math.rad(4.5) then
 			citiesLife[i] = citiesLife[i]-1
+			auAttack:stop() auAttack:play()
 		end
 	end
 	
 end
 
+--Create a new city
 function createCity()
-
 	--Create a random location for the city
 	location = math.rad(360) * math.random(0,1000)/1000
 	
