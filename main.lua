@@ -6,12 +6,15 @@ SCALE = 3
 
 bgcolor = {240,240,255,255}
 
-highscore = {0,0,0}
+highscore = {25000,20000,15000}
 
 JUMP_POWER = -500
 GRAVITY = 1000
 
 use_music = true
+
+menuSelection = 0
+menuFrame = 0
 
 --State of the game:
 
@@ -21,7 +24,7 @@ use_music = true
 -- 3: endgame
 -- 4: credits
 
-gamestate = 1
+gamestate = 0
 
 --load assets and initialize values
 
@@ -133,8 +136,8 @@ function love.load()
 
 	love.graphics.setBackgroundColor(bgcolor)
 
-	loadHighscore()
 	loadResources()
+	loadHighscore()
 	
 	math.randomseed( os.time() )
 	
@@ -203,6 +206,21 @@ function loadResources()
 	imgBullet = love.graphics.newImage("gfx/bullet.png")
 	imgBullet:setFilter("nearest","nearest")
 	
+	imgTitleScreen = love.graphics.newImage("gfx/titleScreen.png")
+	imgTitleScreen:setFilter("nearest","nearest")
+	
+	imgzs1 = love.graphics.newImage("gfx/zs1.png")
+	imgzs1:setFilter("nearest","nearest")
+	
+	imgzs2 = love.graphics.newImage("gfx/zs2.png")
+	imgzs2:setFilter("nearest","nearest")
+	
+	imgSelector = love.graphics.newImage("gfx/selector.png")
+	imgSelector:setFilter("nearest","nearest")
+	
+	imgDream = love.graphics.newImage("gfx/hsDream.png")
+	imgDream:setFilter("nearest","nearest")
+	
 	-- Load sound effects
 	auJump = love.audio.newSource("sfx/jump.wav","static")
 	auAttack = love.audio.newSource("sfx/attack.wav","static")
@@ -210,6 +228,8 @@ function loadResources()
 	auShot = love.audio.newSource("sfx/shot.wav","static")
 	auHurt = love.audio.newSource("sfx/hurt.wav","static")
 	auEat = love.audio.newSource("sfx/eat.wav","static")
+	auSelect = love.audio.newSource("sfx/select.wav","static")
+	auSelect:setVolume(0.3)
 	
 	if use_music == true then
 		auBGM = love.audio.newSource("sfx/bu-ninjas.wav","stream")
@@ -219,25 +239,34 @@ function loadResources()
 	end
 
 	font = love.graphics.newFont( "gfx/PressStart2P.ttf", 23 )
+	fontHS = love.graphics.newFont( "gfx/PressStart2P.ttf", 16 )
 	love.graphics.setFont( font )
 
 end
 
 function loadHighscore()
-	if love.filesystem.exists("highscore") then
-		local data = love.filesystem.read("highscore")
-		if data ~=nil then
-			local datatable = table.load(data)
-			if #datatable == #highscore then
-				highscore = datatable
-			end
-		end
+
+	if not love.filesystem.exists("highscores") then
+		love.filesystem.newFile( "highscores" )
+		saveHighscore()
 	end
+	 
+	local data = love.filesystem.read("highscores")
+	
+    local sep, fields = ",", {}
+       
+    local pattern = string.format("([^%s]+)", sep)
+       
+    data:gsub(pattern, function(c) fields[#fields+1] = c end)
+        
+    highscore = fields
 end
 
 function saveHighscore()
-	local datatable = table.save(highscore)
-	love.filesystem.write("highscore",datatable)
+
+	data = table.concat(highscore, ",")
+	love.filesystem.write("highscores",data)
+	
 end
 
 function restart()
@@ -305,95 +334,170 @@ function love.focus(f)
 end
 
 function love.draw()
-
-	yRef = screenmiddleheight+65+imgBackground:getHeight()/2*worldSize*0.629
+	if gamestate == 0 then
 	
-	--Draw the sky
-	love.graphics.draw( imgSky, screenmiddlewidth, screenmiddleheight+272, math.rad(skyRotation*360), 1, 1, imgSky:getWidth()/2, imgSky:getHeight()/2 )
+		--Draw titlescreen
+		love.graphics.draw( imgTitleScreen, 0, 0 )
 		
-	--Draw the sky gauge
-	
-	y = 163+190 -  ( (1/0.87*(1-worldSize) )    *190)
-	
-	gaugeQuad = love.graphics.newQuad(0 ,y ,1457, 1457-y ,1457 ,1457)
-	love.graphics.drawq( imgSkyGauge, gaugeQuad,  screenmiddlewidth, screenmiddleheight+272, math.rad(skyRotation*360), 1, 1, imgSky:getWidth()/2, imgSky:getHeight()/2-y )
-		
-	--Draw the background
-	love.graphics.draw( imgBackground, screenmiddlewidth, yRef, math.rad(rotation*360), worldSize, worldSize, imgBackground:getWidth()/2, imgBackground:getHeight()/2 )
-	
-	--Draw destroyed cities
-	for i,dcity in ipairs(dcities) do
-		love.graphics.drawq( imgCityDestroy, cityDestroyFrames[math.floor(dcitiesFrames[i]/5)], screenmiddlewidth, yRef, math.rad(rotation*360)+dcity, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
-	end
-	
-	--Draw cities
-	for i,city in ipairs(cities) do
-		if (citiesLife[i] == 3) then
-			if(citiesFrames[i] < 15) then
-				love.graphics.drawq( imgCityCreate, cityCreateFrames[math.floor(citiesFrames[i]/5)], screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
-			else
-				love.graphics.draw( imgCity, screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
-			end
-		elseif (citiesLife[i] == 2) then 
-			love.graphics.draw( imgCityDamaged, screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
+		--Draw Zs
+		if menuFrame < 40 then 
+			love.graphics.draw(imgzs1, 500, 126)
 		else
-			love.graphics.draw( imgCityDestroyed, screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
+			love.graphics.draw(imgzs2, 500, 126)
 		end
-	end
-	
-	
-	--Draw humans :D
-	for i,human in ipairs(humans) do
-		love.graphics.drawq( imgHumans, humanFrames[math.floor(currentHumanFrame)+6*humanColors[i]], screenmiddlewidth, yRef, math.rad(rotation*360)+human, 1, 1, 15, 43 + yRef-screenmiddleheight-65)		
-	end
-	
-	--Draw mac!
-	if direction == 1 then
-		frameToDraw = 0
-		-- Determine if moving, if true, animate
-		if moving == true then
-			frameToDraw = currentMacFrame
+		
+		--Draw highscores
+		if menuSelection == 1 then
+			love.graphics.setFont( fontHS )
+			r, g, b, a = love.graphics.getColor( )
+			
+			love.graphics.draw(imgDream, 145, 200 , 0, 1, 1, imgSelector:getWidth()/2, imgSelector:getHeight()/2)
+		
+			--WRITE HIGHSCORES
+			love.graphics.setColor( 0, 0, 0, 255 )
+			
+			love.graphics.print(highscore[1], 240, 355)
+			love.graphics.print(highscore[2], 240, 385)
+			love.graphics.print(highscore[3], 240, 414)
+			
+			love.graphics.setColor( r, g, b, a )
 		end
-		love.graphics.drawq( imgMacLF, macFrames[math.floor(frameToDraw+8*damageFrame/6)], screenmiddlewidth, macy, 0, 1, 1, 39, 53)
-	else
-		frameToDraw = 0
-		-- Determine if moving, if true, animate
-		if moving == true then
-			frameToDraw = currentMacFrame
+		love.graphics.setFont( font )
+		
+		--Draw Selector thingy
+		
+		if menuSelection == 0 then
+			love.graphics.draw(imgSelector, 540, 255 ,0,1,1,imgSelector:getWidth()/2, imgSelector:getHeight()/2)
+		elseif menuSelection == 1 then
+			love.graphics.draw(imgSelector, 540, 315 ,0,1,1,imgSelector:getWidth()/2, imgSelector:getHeight()/2)
+		else
+			love.graphics.draw(imgSelector, 540, 375 ,0,1,1,imgSelector:getWidth()/2, imgSelector:getHeight()/2)
 		end
-		love.graphics.drawq( imgMacRF, macFrames[math.floor(frameToDraw+8*damageFrame/6)], screenmiddlewidth, macy, 0, 1, 1, 39, 53)
+		
+		
+		
+	
+	elseif gamestate == 1 or gamestate == 2 or gamestate == 3 then 
+		yRef = screenmiddleheight+65+imgBackground:getHeight()/2*worldSize*0.629
+		
+		--Draw the sky
+		love.graphics.draw( imgSky, screenmiddlewidth, screenmiddleheight+272, math.rad(skyRotation*360), 1, 1, imgSky:getWidth()/2, imgSky:getHeight()/2 )
+			
+		--Draw the sky gauge
+		
+		y = 163+190 -  ( (1/0.87*(1-worldSize) )    *190)
+		
+		gaugeQuad = love.graphics.newQuad(0 ,y ,1457, 1457-y ,1457 ,1457)
+		love.graphics.drawq( imgSkyGauge, gaugeQuad,  screenmiddlewidth, screenmiddleheight+272, math.rad(skyRotation*360), 1, 1, imgSky:getWidth()/2, imgSky:getHeight()/2-y )
+			
+		--Draw the background
+		love.graphics.draw( imgBackground, screenmiddlewidth, yRef, math.rad(rotation*360), worldSize, worldSize, imgBackground:getWidth()/2, imgBackground:getHeight()/2 )
+		
+		--Draw destroyed cities
+		for i,dcity in ipairs(dcities) do
+			love.graphics.drawq( imgCityDestroy, cityDestroyFrames[math.floor(dcitiesFrames[i]/5)], screenmiddlewidth, yRef, math.rad(rotation*360)+dcity, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
+		end
+		
+		--Draw cities
+		for i,city in ipairs(cities) do
+			if (citiesLife[i] == 3) then
+				if(citiesFrames[i] < 15) then
+					love.graphics.drawq( imgCityCreate, cityCreateFrames[math.floor(citiesFrames[i]/5)], screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
+				else
+					love.graphics.draw( imgCity, screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
+				end
+			elseif (citiesLife[i] == 2) then 
+				love.graphics.draw( imgCityDamaged, screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
+			else
+				love.graphics.draw( imgCityDestroyed, screenmiddlewidth, yRef, math.rad(rotation*360)+city, 1, 1, imgCity:getWidth()/2, imgCity:getHeight() + yRef-screenmiddleheight-70)
+			end
+		end
+		
+		
+		--Draw humans :D
+		for i,human in ipairs(humans) do
+			love.graphics.drawq( imgHumans, humanFrames[math.floor(currentHumanFrame)+6*humanColors[i]], screenmiddlewidth, yRef, math.rad(rotation*360)+human, 1, 1, 15, 43 + yRef-screenmiddleheight-65)		
+		end
+		
+		--Draw mac!
+		if direction == 1 then
+			frameToDraw = 0
+			-- Determine if moving, if true, animate
+			if moving == true then
+				frameToDraw = currentMacFrame
+			end
+			love.graphics.drawq( imgMacLF, macFrames[math.floor(frameToDraw+8*damageFrame/6)], screenmiddlewidth, macy, 0, 1, 1, 39, 53)
+		else
+			frameToDraw = 0
+			-- Determine if moving, if true, animate
+			if moving == true then
+				frameToDraw = currentMacFrame
+			end
+			love.graphics.drawq( imgMacRF, macFrames[math.floor(frameToDraw+8*damageFrame/6)], screenmiddlewidth, macy, 0, 1, 1, 39, 53)
+		end
+		
+		--Draw bullets :D
+		for i,bullet in ipairs(bullets) do
+			love.graphics.draw( imgBullet, screenmiddlewidth, yRef-20, math.rad(rotation*360)+bullet, 1, 1, 15, 43 + yRef-screenmiddleheight-65)		
+		end
+		
+		--Draw the foreground
+		love.graphics.draw( imgForeground, screenmiddlewidth, yRef, math.rad(rotation*360), worldSize, worldSize, imgBackground:getWidth()/2, imgBackground:getHeight()/2 )
+		
+		--Draw the ghosts
+		for i,ghost in ipairs(ghosts) do
+			love.graphics.drawq( imgGhosts, ghostFrames[math.floor(ghostHeights[i]/6)], screenmiddlewidth, yRef+7-ghostHeights[i], math.rad(rotation*360)+ghost, 1, 1, 15, 43 + yRef-screenmiddleheight-65)		
+		end
+		
+
+		--Draw the pause screen
+		if gamestate == 2 then
+			love.graphics.draw( imgPauseScreen, 0, 0 )
+		end
+		
+		--Draw the score
+		love.graphics.print("Score: ", 20,20)
+		love.graphics.print(score, 165,20)
+		
+		love.graphics.print("Time: ", 20, 60)
+		
+		if not endGame then
+			newtime = os.time()-starttime
+		end
+		love.graphics.print(newtime,140,60)
 	end
-	
-	--Draw bullets :D
-	for i,bullet in ipairs(bullets) do
-		love.graphics.draw( imgBullet, screenmiddlewidth, yRef-20, math.rad(rotation*360)+bullet, 1, 1, 15, 43 + yRef-screenmiddleheight-65)		
+end
+
+
+function menuDown()
+
+	if menuSelection < 2 then
+		menuSelection = menuSelection +1
+		auSelect:stop() auSelect:play()
 	end
+
+end
+
+function menuUp()
+
+	if menuSelection > 0 then
+		menuSelection = menuSelection -1
+		auSelect:stop() auSelect:play()
+	end
+
+end
+
+function menuEnter()
 	
-	--Draw the foreground
-	love.graphics.draw( imgForeground, screenmiddlewidth, yRef, math.rad(rotation*360), worldSize, worldSize, imgBackground:getWidth()/2, imgBackground:getHeight()/2 )
-	
-	--Draw the ghosts
-	for i,ghost in ipairs(ghosts) do
-		love.graphics.drawq( imgGhosts, ghostFrames[math.floor(ghostHeights[i]/6)], screenmiddlewidth, yRef+7-ghostHeights[i], math.rad(rotation*360)+ghost, 1, 1, 15, 43 + yRef-screenmiddleheight-65)		
+	if menuSelection == 0 then
+		restart()
+		gamestate = 1
+		auBGM:stop() auBGM:play()
+	elseif menuSelection == 2 then
+		love.event.push("quit")
 	end
 	
 
-	--Draw the pause screen
-	if gamestate == 2 then
-		love.graphics.draw( imgPauseScreen, 0, 0 )
-	end
-	
-	--Draw the score
-	love.graphics.print("Score: ", 20,20)
-	love.graphics.print(score, 165,20)
-	
-	love.graphics.print("Time: ", 20, 60)
-	
-	if not endGame then
-		newtime = os.time()-starttime
-	end
-	love.graphics.print(newtime,140,60)
-	
 end
 
 function love.keypressed(key,unicode)
@@ -408,7 +512,7 @@ function love.keypressed(key,unicode)
 		elseif key == 'return' then
 			menuEnter()
 		elseif key == 'escape' then
-			menuEscape()
+			love.event.push("quit")
 		end	
 	
 
@@ -416,6 +520,8 @@ function love.keypressed(key,unicode)
     elseif gamestate == 1 or gamestate == 3  then
     
 		if key == 'p' then
+			gamestate = 2
+		elseif key == 'escape' then
 			gamestate = 2
 		end	
 	
@@ -425,7 +531,9 @@ function love.keypressed(key,unicode)
 		if key == 'p' then
 			gamestate = 1
 		elseif key == 'q' then
+			restart()
 			gamestate = 0
+			auBGM:stop() auBGM:play()
 		end	
 	
 	--CREDITS KEYBOARD HANDLING
@@ -441,7 +549,15 @@ end
 
 function love.update(dt)
 
-    if gamestate == 1 then
+	if gamestate == 0  then
+	
+		if menuFrame == 80 then
+			menuFrame = 0
+		else
+			menuFrame = menuFrame+1
+		end
+
+    elseif gamestate == 1 then
     
 		--Update frame for character animation
 		
@@ -592,10 +708,7 @@ function love.update(dt)
 			end
 			initEndGame()
 		end
-		
 	end
-
-
 end
 
 function calculateAndHandleScore()
@@ -607,7 +720,22 @@ function calculateAndHandleScore()
 	end
 	
 	score = math.floor(bonus + score)
-
+	
+	
+	if(score > tonumber(highscore[1])) then
+		highscore[3] = highscore[2]
+		highscore[2] = highscore[1]
+		highscore[1] = tostring(score)
+		
+	elseif(score > tonumber(highscore[2])) then
+		highscore[3] = highscore[2]
+		highscore[2] = tostring(score)
+	
+	elseif(score > tonumber(highscore[3])) then
+		highscore[3] = tostring(score)
+	end
+	
+	saveHighscore()
 end
 
 function initEndGame()
@@ -631,6 +759,12 @@ function initEndGame()
 		auDestroy:stop() auDestroy:play()
 	end
 	
+	for i,bullet in ipairs(bullets) do
+		table.remove(bulletsLife, i)
+		table.remove(bullets, i)
+		table.remove(bulletsDirection, i )
+	end
+			
 	auBGM:stop()
 	
 end
