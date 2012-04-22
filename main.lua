@@ -1,4 +1,14 @@
 
+	----------------------------------
+	----------------------------------
+	--		Destroy all Humans		--
+	--	 A game by Sergio Morales   --
+	--		    (Fireblend)         --
+	--	   A Ludum Dare 23 Entry	--
+	----------------------------------
+	----------------------------------
+
+	--		  April 22, 2012		--
 
 WIDTH = 300
 HEIGHT = 200
@@ -143,7 +153,6 @@ function love.load()
 	
 	updateScale()
 	restart()
-
 end
 
 function updateScale()
@@ -221,6 +230,23 @@ function loadResources()
 	imgDream = love.graphics.newImage("gfx/hsDream.png")
 	imgDream:setFilter("nearest","nearest")
 	
+	imgDreamInstructions = love.graphics.newImage("gfx/instructionsDream.png")
+	imgDreamInstructions:setFilter("nearest","nearest")
+	
+	imgEnd = love.graphics.newImage("gfx/endSpace.png")
+	imgEnd:setFilter("nearest","nearest")
+	
+	imgThanks1 = love.graphics.newImage("gfx/thanksScreen1.png")
+	imgThanks1:setFilter("nearest","nearest")
+	imgThanks2 = love.graphics.newImage("gfx/thanksScreen2.png")
+	imgThanks2:setFilter("nearest","nearest")
+	imgThanks3 = love.graphics.newImage("gfx/thanksScreen3.png")
+	imgThanks3:setFilter("nearest","nearest")
+	imgThanks4 = love.graphics.newImage("gfx/thanksScreen4.png")
+	imgThanks4:setFilter("nearest","nearest")
+	imgThanks5 = love.graphics.newImage("gfx/thanksScreen5.png")
+	imgThanks5:setFilter("nearest","nearest")
+	
 	-- Load sound effects
 	auJump = love.audio.newSource("sfx/jump.wav","static")
 	auAttack = love.audio.newSource("sfx/attack.wav","static")
@@ -263,16 +289,13 @@ function loadHighscore()
 end
 
 function saveHighscore()
-
 	data = table.concat(highscore, ",")
 	love.filesystem.write("highscores",data)
-	
 end
 
 function restart()
 
 	--Direction of our main character
-
 	--0: right
 	--1: left
 
@@ -318,14 +341,24 @@ function restart()
 	
 	humanDeaths = 0
 	endGame = false
+	endGame2 = false
+	endGame3 = false
 	
 	starttime = os.time()
 	newtime = 0
 	
 	damageFrame = 0
+	jumps = 3
+	macRotation = 0
+	macyEnd = 0
 	
+	showThanks1 = false
+	showThanks2 = false
+	showThanks3 = false
+	showThanks4 = false
+	showThanks5 = false
+	endFrames = 0
 end
-
 
 function love.focus(f)
 	if not f and gamestate == 1 then
@@ -364,20 +397,25 @@ function love.draw()
 		end
 		love.graphics.setFont( font )
 		
+		--Draw instructions
+		if menuSelection == 2 then
+			love.graphics.draw(imgDreamInstructions, 145, 200 , 0, 1, 1, imgSelector:getWidth()/2, imgSelector:getHeight()/2)
+		end
+		love.graphics.setFont( font )
+		
 		--Draw Selector thingy
 		
 		if menuSelection == 0 then
 			love.graphics.draw(imgSelector, 540, 255 ,0,1,1,imgSelector:getWidth()/2, imgSelector:getHeight()/2)
 		elseif menuSelection == 1 then
 			love.graphics.draw(imgSelector, 540, 315 ,0,1,1,imgSelector:getWidth()/2, imgSelector:getHeight()/2)
-		else
+		elseif menuSelection == 2 then
 			love.graphics.draw(imgSelector, 540, 375 ,0,1,1,imgSelector:getWidth()/2, imgSelector:getHeight()/2)
+		else
+			love.graphics.draw(imgSelector, 540, 435 ,0,1,1,imgSelector:getWidth()/2, imgSelector:getHeight()/2)
 		end
 		
-		
-		
-	
-	elseif gamestate == 1 or gamestate == 2 or gamestate == 3 then 
+	elseif gamestate == 1 or gamestate == 2 or gamestate == 3 and not endGame3 then 
 		yRef = screenmiddleheight+65+imgBackground:getHeight()/2*worldSize*0.629
 		
 		--Draw the sky
@@ -413,7 +451,6 @@ function love.draw()
 			end
 		end
 		
-		
 		--Draw humans :D
 		for i,human in ipairs(humans) do
 			love.graphics.drawq( imgHumans, humanFrames[math.floor(currentHumanFrame)+6*humanColors[i]], screenmiddlewidth, yRef, math.rad(rotation*360)+human, 1, 1, 15, 43 + yRef-screenmiddleheight-65)		
@@ -426,14 +463,22 @@ function love.draw()
 			if moving == true then
 				frameToDraw = currentMacFrame
 			end
-			love.graphics.drawq( imgMacLF, macFrames[math.floor(frameToDraw+8*damageFrame/6)], screenmiddlewidth, macy, 0, 1, 1, 39, 53)
+			if endGame2 then
+				love.graphics.drawq( imgMacLF, macFrames[math.floor(frameToDraw+8*damageFrame/6)], screenmiddlewidth, macyEnd, macRotation, 1, 1, 39, 53)
+			else
+				love.graphics.drawq( imgMacLF, macFrames[math.floor(frameToDraw+8*damageFrame/6)], screenmiddlewidth, macy, macRotation, 1, 1, 39, 53)
+			end
 		else
 			frameToDraw = 0
 			-- Determine if moving, if true, animate
 			if moving == true then
 				frameToDraw = currentMacFrame
 			end
-			love.graphics.drawq( imgMacRF, macFrames[math.floor(frameToDraw+8*damageFrame/6)], screenmiddlewidth, macy, 0, 1, 1, 39, 53)
+			if endGame2 then
+				love.graphics.drawq( imgMacRF, macFrames[math.floor(frameToDraw+8*damageFrame/6)], screenmiddlewidth, macyEnd, macRotation, 1, 1, 39, 53)
+			else
+				love.graphics.drawq( imgMacRF, macFrames[math.floor(frameToDraw+8*damageFrame/6)], screenmiddlewidth, macy, macRotation, 1, 1, 39, 53)
+			end
 		end
 		
 		--Draw bullets :D
@@ -448,8 +493,7 @@ function love.draw()
 		for i,ghost in ipairs(ghosts) do
 			love.graphics.drawq( imgGhosts, ghostFrames[math.floor(ghostHeights[i]/6)], screenmiddlewidth, yRef+7-ghostHeights[i], math.rad(rotation*360)+ghost, 1, 1, 15, 43 + yRef-screenmiddleheight-65)		
 		end
-		
-
+	
 		--Draw the pause screen
 		if gamestate == 2 then
 			love.graphics.draw( imgPauseScreen, 0, 0 )
@@ -465,13 +509,58 @@ function love.draw()
 			newtime = os.time()-starttime
 		end
 		love.graphics.print(newtime,140,60)
+	else
+		
+		yRef = screenmiddleheight+65+imgBackground:getHeight()/2*worldSize*0.629
+		
+		--Draw the sky
+		love.graphics.draw( imgEnd, 0, 0 )
+		
+		--Draw mac!
+		if direction == 1 then
+			frameToDraw = 0
+			-- Determine if moving, if true, animate
+			if moving == true then
+				frameToDraw = currentMacFrame
+			end
+			if endGame2 then
+				love.graphics.drawq( imgMacLF, macFrames[math.floor(frameToDraw+8*damageFrame/6)], screenmiddlewidth, macyEnd, macRotation, 1, 1, 39, 53)
+			else
+				love.graphics.drawq( imgMacLF, macFrames[math.floor(frameToDraw+8*damageFrame/6)], screenmiddlewidth, macy, macRotation, 1, 1, 39, 53)
+			end
+		else
+			frameToDraw = 0
+			-- Determine if moving, if true, animate
+			if moving == true then
+				frameToDraw = currentMacFrame
+			end
+			if endGame2 then
+				love.graphics.drawq( imgMacRF, macFrames[math.floor(frameToDraw+8*damageFrame/6)], screenmiddlewidth, macyEnd, macRotation, 1, 1, 39, 53)
+			else
+				love.graphics.drawq( imgMacRF, macFrames[math.floor(frameToDraw+8*damageFrame/6)], screenmiddlewidth, macy, macRotation, 1, 1, 39, 53)
+			end
+		end
+		if showThanks1 then
+			love.graphics.draw( imgThanks1, 0, 0 )
+		end
+		if showThanks2 then
+			love.graphics.draw( imgThanks2, 36, 204 )
+		end
+		if showThanks3 then
+			love.graphics.draw( imgThanks3, 137, 273 )
+		end
+		if showThanks4 then
+			love.graphics.draw( imgThanks4, 87, 330 )
+		end
+		if showThanks5 then
+			love.graphics.draw( imgThanks5, 551, 560 )
+		end
 	end
 end
 
-
 function menuDown()
 
-	if menuSelection < 2 then
+	if menuSelection < 3 then
 		menuSelection = menuSelection +1
 		auSelect:stop() auSelect:play()
 	end
@@ -479,31 +568,33 @@ function menuDown()
 end
 
 function menuUp()
-
 	if menuSelection > 0 then
 		menuSelection = menuSelection -1
 		auSelect:stop() auSelect:play()
 	end
-
 end
 
 function menuEnter()
-	
 	if menuSelection == 0 then
 		restart()
 		gamestate = 1
 		auBGM:stop() auBGM:play()
-	elseif menuSelection == 2 then
+	elseif menuSelection == 3 then
 		love.event.push("quit")
 	end
-	
-
 end
 
 function love.keypressed(key,unicode)
+	
+	if endGame3 and showThanks5 then
+		if key == 'q' then
+			restart()
+			gamestate = 0
+			auBGM:stop() auBGM:play()
+		end	
 
 	--MAIN MENU KEYBOARD HANDLING
-    if gamestate == 0 then
+    elseif gamestate == 0 then
     
 		if key == 'down' then
 			menuDown()
@@ -515,7 +606,6 @@ function love.keypressed(key,unicode)
 			love.event.push("quit")
 		end	
 	
-
 	--IN-GAME/ENDGAME KEYBOARD HANDLING
     elseif gamestate == 1 or gamestate == 3  then
     
@@ -538,177 +628,228 @@ function love.keypressed(key,unicode)
 	
 	--CREDITS KEYBOARD HANDLING
 	elseif gamestate == 4 then
-	
 		if key == 'escape' and canquit then
 			gamestate = 0
 		end	
-		
 	end
-	
 end
 
 function love.update(dt)
-
-	if gamestate == 0  then
-	
-		if menuFrame == 80 then
-			menuFrame = 0
-		else
-			menuFrame = menuFrame+1
-		end
-
-    elseif gamestate == 1 then
-    
-		--Update frame for character animation
+	if not endGame3 then
+		if gamestate == 0  then
 		
-		currentMacFrame = (currentMacFrame + 18*dt) % 9
-		
-		currentHumanFrame = (currentHumanFrame + 25*dt) % 6
-		
-		if damageFrame > 0 then
-			damageFrame = damageFrame - 1
-		end
-		
-		moving = false
-		
-		--Modify worldsize (for debugging)
-		
-		if love.keyboard.isDown("u") then
-			if worldSize < 1 then
-				worldSize = worldSize + 0.001
+			if menuFrame == 80 then
+				menuFrame = 0
+			else
+				menuFrame = menuFrame+1
 			end
+
+		elseif gamestate == 1 or gamestate == 3 then
 		
-		elseif love.keyboard.isDown("d") then
-			if worldSize > 0 then
-				worldSize = worldSize - 0.001
+			--Update frame for character animation
+			
+			currentMacFrame = (currentMacFrame + 18*dt) % 9
+			
+			currentHumanFrame = (currentHumanFrame + 25*dt) % 6
+			
+			if damageFrame > 0 then
+				damageFrame = damageFrame - 1
 			end
-		end
-		
-		--Jumping logic
-		if love.keyboard.isDown(" ") and jumping == false then
-			auJump:stop() auJump:play()
-			yspeed = JUMP_POWER
+			
+			moving = false
+			
+			--Modify worldsize (for debugging)
+			if gamestate == 1 then
+				
+				--Jumping logic
+				if love.keyboard.isDown(" ") and jumping == false then
+					auJump:stop() auJump:play()
+					yspeed = JUMP_POWER
+					jumping = true
+					attacking = true
+				end
+			end 
+			
+			if endGame then
+				
+				if jumps > 0 then
+					if jumping == false then
+						auJump:stop() auJump:play()
+						yspeed = JUMP_POWER
+						jumping = true
+						attacking = true
+					end
+				else
+					if(macyEnd < 700) then
+						endGame2 = true
+						macRotation = macRotation+0.02
+						macyEnd = macyEnd + 15
+					else
+						macy = 0
+						macRotation = 0.02
+						endGame3 = true
+						endGame2 = false
+						endGame = false
+						
+					end
+				end
+				
+			end
+			
 			jumping = true
-			attacking = true
-		end
 
-		jumping = true
-
-		-- Update Y position (jump)
-		yspeed = yspeed + dt*GRAVITY
-		
-		newmacy = macy + yspeed*dt
-		
-		if newmacy > macy then
-			goingDown = true
-		else
-			goingDown = false
-		end
-		
-		macy = newmacy
-		
-		if macy > 275 and jumping and goingDown and attacking then
-			townAttack()
-			attacking = false
-		end
-		
-		if macy > screenmiddleheight+15 then
-			macy = screenmiddleheight+15
-			yspeed = 0
-			attacking = false
-			jumping = false
-			townClean()
-		end
-		
-		
-		-- Move to the left
-		if love.keyboard.isDown("left") then
-			moving = true
-			direction = 1
+			-- Update Y position (jump)
+			yspeed = yspeed + dt*GRAVITY
 			
-			if not townCollitionLeft() then
-				if rotation < 1 then
-					rotation = rotation + 0.001
-				else
-					rotation = -1
+			newmacy = macy + yspeed*dt
+			
+			if newmacy > macy then
+				goingDown = true
+			else
+				goingDown = false
+			end
+			
+			macy = newmacy
+			
+			if macy > 275 and jumping and goingDown and attacking then
+				townAttack()
+				attacking = false
+			end
+			
+			if macy > screenmiddleheight+15 then
+				macy = screenmiddleheight+15
+				yspeed = 0
+				
+				if endGame then
+					jumps = jumps - 1
 				end
 				
-				if skyRotation < 1 then
-					skyRotation = skyRotation + 0.0002
-				else
-					skyRotation = -1
-				end
+				attacking = false
+				jumping = false
+				townClean()
 			end
-		
-		-- Move to the right
-		elseif love.keyboard.isDown("right") then
-			moving = true
-			direction = 0
 			
+			if not endGame2 then
+				macyEnd = macy
+			end
 			
-			if not townCollitionRight() then
-			
-				if rotation > -1 then
-					rotation = rotation - 0.001
-				else
-					rotation = 1
-				end	
+			if gamestate == 1 then
+				-- Move to the left
+				if love.keyboard.isDown("left") then
+					moving = true
+					direction = 1
+					
+					if not townCollitionLeft() then
+						if rotation < 1 then
+							rotation = rotation + 0.001
+						else
+							rotation = -1
+						end
+						
+						if skyRotation < 1 then
+							skyRotation = skyRotation + 0.00013
+						else
+							skyRotation = -1
+						end
+					end
 				
-				if skyRotation > -1 then
-					skyRotation = skyRotation - 0.0004
-				else
-					skyRotation = 1
+				-- Move to the right
+				elseif love.keyboard.isDown("right") then
+					moving = true
+					direction = 0
+					
+					
+					if not townCollitionRight() then
+					
+						if rotation > -1 then
+							rotation = rotation - 0.001
+						else
+							rotation = 1
+						end	
+						
+						if skyRotation > -1 then
+							skyRotation = skyRotation - 0.00013
+						else
+							skyRotation = 1
+						end
+					end
 				end
 			end
-		end
-		
-		
-		--Check if a city has to be created
-		cityTimer = cityTimer - dt
-		
-		if worldSize > 0.25 then
-			citiesToBuild = 5
-		elseif worldSize > 0.14 then	
-			citiesToBuild = 3
-		elseif worldSize > 0.13 then	
-			citiesToBuild = 1
-		else 
-			citiesToBuild = 0
-		end
-		
-		if cityTimer < 0 then 
-			cityTimer = 5.0
-			if cityCount < citiesToBuild then
-				createCity()
-				cityCount = cityCount + 1
-			end
-		end
-		
-		--update human's locations
-		updateHumans()
-		
-		--update human's locations
-		updateGhosts()
-	
-		--update human's locations
-		updateDCities()
-
-		--update cities
-		updateCities()
-		
-		--update bullets
-		updateBullets()
-		
-		--Check for endgame condition
-		if worldSize < 0.13 then
 			
-			initEndGame()
-			if not endGame then
-				calculateAndHandleScore()
-				endGame = true
+			--Check if a city has to be created
+			cityTimer = cityTimer - dt
+			
+			if worldSize > 0.25 then
+				citiesToBuild = 5
+			elseif worldSize > 0.14 then	
+				citiesToBuild = 3
+			elseif worldSize > 0.13 then	
+				citiesToBuild = 1
+			else 
+				citiesToBuild = 0
+			end
+			
+			if cityTimer < 0 then 
+				cityTimer = 5.0
+				if cityCount < citiesToBuild then
+					createCity()
+					cityCount = cityCount + 1
+				end
+			end
+			
+			--update human's locations
+			updateHumans()
+			
+			--update human's locations
+			updateGhosts()
+		
+			--update human's locations
+			updateDCities()
+
+			--update cities
+			updateCities()
+			
+			--update bullets
+			updateBullets()
+			
+			--Check for endgame condition
+			if worldSize < 0.13 then
+				
+				initEndGame()
+				if not endGame then
+					calculateAndHandleScore()
+					endGame = true
+					gamestate = 3
+				end
+			end
+			
+			if endGame3 then
+				auBGM:play()
 			end
 		end
-	end
+	else
+		macRotation = macRotation+0.02
+		macy = macy + 0.5
+		if macy > 650 then
+			macy = -50
+		end
+		
+		if endFrames > 650 then
+			showThanks5 = true
+		elseif endFrames > 500 then
+			showThanks4 = true
+		elseif endFrames > 400 then
+			showThanks3 = true
+		elseif endFrames > 300 then
+			showThanks2 = true
+		elseif endFrames > 200 then
+			showThanks1 = true
+		end
+		
+		if not showThanks5 then
+			endFrames = endFrames + 1
+		end
+	end	
 end
 
 function calculateAndHandleScore()
@@ -966,8 +1107,6 @@ end
 
 --Start Ghost Animation at location
 function death(location)
-	score = score + 50
-	
 	table.insert(ghosts,location)
 	table.insert(ghostHeights,0)
 	
@@ -997,6 +1136,7 @@ function updateHumans()
 		
 		if( (ang < math.rad(1) or math.rad(359)-ang < math.rad(1)) and not jumping) then
 			death(humans[i])
+			score = score + 50
 			
 			table.remove(humans, i)
 			table.remove(humanSpeeds, i)
