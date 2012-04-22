@@ -26,15 +26,55 @@ gamestate = 1
 --load assets and initialize values
 
 macFrames = {}
-macFrames[0] = love.graphics.newQuad(0,0,78,106,719,106)
-macFrames[1] = love.graphics.newQuad(81,0,78,106,719,106)
-macFrames[2] = love.graphics.newQuad(161,0,78,106,719,106)
-macFrames[3] = love.graphics.newQuad(241,0,78,106,719,106)
-macFrames[4] = love.graphics.newQuad(321,0,78,106,719,106)
-macFrames[5] = love.graphics.newQuad(401,0,78,106,719,106)
-macFrames[6] = love.graphics.newQuad(481,0,78,106,719,106)
-macFrames[7] = love.graphics.newQuad(561,0,78,106,719,106)
-macFrames[8] = love.graphics.newQuad(641,0,78,106,719,106)
+macFrames[0] = love.graphics.newQuad(0,0,78,106,719,537)
+macFrames[1] = love.graphics.newQuad(81,0,78,106,719,537)
+macFrames[2] = love.graphics.newQuad(161,0,78,106,719,537)
+macFrames[3] = love.graphics.newQuad(241,0,78,106,719,537)
+macFrames[4] = love.graphics.newQuad(321,0,78,106,719,537)
+macFrames[5] = love.graphics.newQuad(401,0,78,106,719,537)
+macFrames[6] = love.graphics.newQuad(481,0,78,106,719,537)
+macFrames[7] = love.graphics.newQuad(561,0,78,106,719,537)
+macFrames[8] = love.graphics.newQuad(641,0,78,106,719,537)
+
+macFrames[9] = love.graphics.newQuad(0,108,78,106,719,537)
+macFrames[10] = love.graphics.newQuad(81,108,78,106,719,537)
+macFrames[11] = love.graphics.newQuad(161,108,78,106,719,537)
+macFrames[12] = love.graphics.newQuad(241,108,78,106,719,537)
+macFrames[13] = love.graphics.newQuad(321,108,78,106,719,537)
+macFrames[14] = love.graphics.newQuad(401,108,78,106,719,537)
+macFrames[15] = love.graphics.newQuad(481,108,78,106,719,537)
+macFrames[16] = love.graphics.newQuad(561,108,78,106,719,537)
+macFrames[17] = love.graphics.newQuad(641,108,78,106,719,537)
+
+macFrames[18] = love.graphics.newQuad(0,216,78,106,719,537)
+macFrames[19] = love.graphics.newQuad(81,216,78,106,719,537)
+macFrames[20] = love.graphics.newQuad(161,216,78,106,719,537)
+macFrames[21] = love.graphics.newQuad(241,216,78,106,719,537)
+macFrames[22] = love.graphics.newQuad(321,216,78,106,719,537)
+macFrames[23] = love.graphics.newQuad(401,216,78,106,719,537)
+macFrames[24] = love.graphics.newQuad(481,216,78,106,719,537)
+macFrames[25] = love.graphics.newQuad(561,216,78,106,719,537)
+macFrames[26] = love.graphics.newQuad(641,216,78,106,719,537)
+
+macFrames[27] = love.graphics.newQuad(0,324,78,106,719,537)
+macFrames[28] = love.graphics.newQuad(81,324,78,106,719,537)
+macFrames[29] = love.graphics.newQuad(161,324,78,106,719,537)
+macFrames[30] = love.graphics.newQuad(241,324,78,106,719,537)
+macFrames[31] = love.graphics.newQuad(321,324,78,106,719,537)
+macFrames[32] = love.graphics.newQuad(401,324,78,106,719,537)
+macFrames[33] = love.graphics.newQuad(481,324,78,106,719,537)
+macFrames[34] = love.graphics.newQuad(561,324,78,106,719,537)
+macFrames[35] = love.graphics.newQuad(641,324,78,106,719,537)
+
+macFrames[37] = love.graphics.newQuad(0,432,78,106,719,537)
+macFrames[36] = love.graphics.newQuad(81,432,78,106,719,537)
+macFrames[38] = love.graphics.newQuad(161,432,78,106,719,537)
+macFrames[39] = love.graphics.newQuad(241,432,78,106,719,537)
+macFrames[40] = love.graphics.newQuad(321,432,78,106,719,537)
+macFrames[41] = love.graphics.newQuad(401,432,78,106,719,537)
+macFrames[42] = love.graphics.newQuad(481,432,78,106,719,537)
+macFrames[43] = love.graphics.newQuad(561,432,78,106,719,537)
+macFrames[44] = love.graphics.newQuad(641,432,78,106,719,537)
 
 humanFrames = {}
 
@@ -167,6 +207,8 @@ function loadResources()
 	auJump = love.audio.newSource("sfx/jump.wav","static")
 	auAttack = love.audio.newSource("sfx/attack.wav","static")
 	auDestroy = love.audio.newSource("sfx/destroy.wav","static")
+	auShot = love.audio.newSource("sfx/shot.wav","static")
+	auHurt = love.audio.newSource("sfx/hurt.wav","static")
 	auEat = love.audio.newSource("sfx/eat.wav","static")
 	
 	if use_music == true then
@@ -251,6 +293,8 @@ function restart()
 	starttime = os.time()
 	newtime = 0
 	
+	damageFrame = 0
+	
 end
 
 
@@ -310,14 +354,14 @@ function love.draw()
 		if moving == true then
 			frameToDraw = currentMacFrame
 		end
-		love.graphics.drawq( imgMacLF, macFrames[math.floor(frameToDraw)], screenmiddlewidth, macy, 0, 1, 1, 39, 53)
+		love.graphics.drawq( imgMacLF, macFrames[math.floor(frameToDraw+8*damageFrame/6)], screenmiddlewidth, macy, 0, 1, 1, 39, 53)
 	else
 		frameToDraw = 0
 		-- Determine if moving, if true, animate
 		if moving == true then
 			frameToDraw = currentMacFrame
 		end
-		love.graphics.drawq( imgMacRF, macFrames[math.floor(frameToDraw)], screenmiddlewidth, macy, 0, 1, 1, 39, 53)
+		love.graphics.drawq( imgMacRF, macFrames[math.floor(frameToDraw+8*damageFrame/6)], screenmiddlewidth, macy, 0, 1, 1, 39, 53)
 	end
 	
 	--Draw bullets :D
@@ -404,6 +448,10 @@ function love.update(dt)
 		currentMacFrame = (currentMacFrame + 18*dt) % 9
 		
 		currentHumanFrame = (currentHumanFrame + 25*dt) % 6
+		
+		if damageFrame > 0 then
+			damageFrame = damageFrame - 1
+		end
 		
 		moving = false
 		
@@ -552,7 +600,13 @@ end
 
 function calculateAndHandleScore()
 
-	score = math.floor(( (180-newtime)/180*7000 ) + score)
+	bonus = 0
+	
+	if(newtime < 180) then
+		bonus = ( (180-newtime)/180*10000 )
+	end
+	
+	score = math.floor(bonus + score)
 
 end
 
@@ -609,7 +663,7 @@ end
 --Clean up destroyed towns
 function townClean()
 	for i,city in ipairs(cities) do
-		if citiesLife[i] == 0 then
+		if citiesLife[i] <= 0 then
 		
 		--Create humans!
 			for d = 0, 15, 1 do
@@ -641,6 +695,7 @@ function fireBullet(location, right)
 	end
 	
 	table.insert(bulletsDirection, right )
+	auShot:stop() auShot:play()
 
 end
 
@@ -660,17 +715,25 @@ function updateBullets()
 		
 		ang =( math.rad(rotation*360)+math.abs(bullets[i]) ) % math.rad(360)
 		
-		if( ( ang < math.rad(1) or math.rad(359)-ang < math.rad(1) ) and macy > 265 and bulletsLife[i] > 15) then
+		if( ( ang < math.rad(1.4) or math.rad(358.6)-ang < math.rad(1.4) ) and macy > 265 and bulletsLife[i] > 15) then
 			
 			table.remove(bulletsLife, i)
 			table.remove(bullets, i)
 			table.remove(bulletsDirection, i )
+			
+			if score > 0 then
+				score = score -25
+			end
+			
+			damageFrame = 24
 			
 			if 1 - worldSize < 0.045*(worldSize) then
 				worldSize = 1
 			else
 				worldSize = worldSize + 0.045*(worldSize)
 			end
+			
+			auHurt:stop() auHurt:play()
 			
 		elseif bulletsLife[i] > 190 then
 		
@@ -703,14 +766,14 @@ function updateCities()
 		else
 			ang =( math.rad(rotation*360)+math.abs(cities[i]) ) % math.rad(360)
 			
-			if ang < math.rad(30) or math.rad(359)-ang < math.rad(30) then
+			if (ang < math.rad(30) or math.rad(359)-ang < math.rad(30)) and citiesFrames[i] > 15 then
 				rand = math.random(0,140) 
 				
 				if(rand <= 1) then
-					if(rand%2 == 1) then
-						fireBullet(cities[i], true)
-					else
+					if(ang < math.rad(30)) then
 						fireBullet(cities[i], false)
+					else
+						fireBullet(cities[i], true)
 					end
 				end
 			end
@@ -751,8 +814,6 @@ function createCity()
 
 	--Add to frameslist
 	table.insert(citiesFrames,0)
-	
-	fireBullet(location, true)
 end
 
 --Create a puny human running for its life
