@@ -702,11 +702,11 @@ function love.update(dt)
 		--Check for endgame condition
 		if worldSize < 0.13 then
 			
+			initEndGame()
 			if not endGame then
 				calculateAndHandleScore()
 				endGame = true
 			end
-			initEndGame()
 		end
 	end
 end
@@ -720,7 +720,6 @@ function calculateAndHandleScore()
 	end
 	
 	score = math.floor(bonus + score)
-	
 	
 	if(score > tonumber(highscore[1])) then
 		highscore[3] = highscore[2]
