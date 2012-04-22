@@ -503,9 +503,9 @@ function love.update(dt)
 		cityTimer = cityTimer - dt
 		
 		if worldSize > 0.25 then
-			citiesToBuild = 1
+			citiesToBuild = 5
 		elseif worldSize > 0.14 then	
-			citiesToBuild = 1
+			citiesToBuild = 3
 		elseif worldSize > 0.13 then	
 			citiesToBuild = 1
 		else 
