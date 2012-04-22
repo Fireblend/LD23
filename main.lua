@@ -157,6 +157,9 @@ function loadResources()
 	imgCityDestroy = love.graphics.newImage("gfx/citydestroyframes.png")
 	imgCityDestroy:setFilter("nearest","nearest")
 
+	imgSkyGauge = love.graphics.newImage("gfx/skyfiller.png")
+	imgSkyGauge:setFilter("nearest","nearest")
+	
 	-- Load sound effects
 	auJump = love.audio.newSource("sfx/jump.wav","static")
 	auAttack = love.audio.newSource("sfx/attack.wav","static")
@@ -230,6 +233,9 @@ function restart()
 	--Cities destruction handling
 	dcities = {}
 	dcitiesFrames = {}
+	
+	humanDeaths = 0
+	
 end
 
 
@@ -245,6 +251,13 @@ function love.draw()
 	
 	--Draw the sky
 	love.graphics.draw( imgSky, screenmiddlewidth, screenmiddleheight+272, math.rad(skyRotation*360), 1, 1, imgSky:getWidth()/2, imgSky:getHeight()/2 )
+		
+	--Draw the sky gauge
+	
+	y = 163+190 -  ( (1/0.87*(1-worldSize) )    *190)
+	
+	gaugeQuad = love.graphics.newQuad(0 ,y ,1457, 1457-y ,1457 ,1457)
+	love.graphics.drawq( imgSkyGauge, gaugeQuad,  screenmiddlewidth, screenmiddleheight+272, math.rad(skyRotation*360), 1, 1, imgSky:getWidth()/2, imgSky:getHeight()/2-y )
 		
 	--Draw the background
 	love.graphics.draw( imgBackground, screenmiddlewidth, yRef, math.rad(rotation*360), worldSize, worldSize, imgBackground:getWidth()/2, imgBackground:getHeight()/2 )
@@ -431,7 +444,7 @@ function love.update(dt)
 				end
 				
 				if skyRotation < 1 then
-					skyRotation = skyRotation + 0.0004
+					skyRotation = skyRotation + 0.0002
 				else
 					skyRotation = -1
 				end
@@ -683,7 +696,7 @@ function updateHumans()
 			table.remove(humanColors, i)
 			humanCount = humanCount -1
 			auEat:stop() auEat:play()
-			worldSize = worldSize - 0.006*(worldSize)
+			worldSize = worldSize - 0.01*(worldSize)
 		end
 	end
 
