@@ -232,7 +232,7 @@ function loadResources()
 	auSelect:setVolume(0.3)
 	
 	if use_music == true then
-		auBGM = love.audio.newSource("sfx/bu-ninjas.wav","stream")
+		auBGM = love.audio.newSource("sfx/bu-ninjas.ogg","stream")
 		auBGM:setLooping(true)
 		auBGM:setVolume(0.8)
 		auBGM:play()
