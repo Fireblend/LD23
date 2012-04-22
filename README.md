@@ -8,7 +8,7 @@ It shouldn't take you too long to get through the whole thing :)
 
 **This is a work in progress!**
 
-![Title Screen](http://i.imgur.com/r6yka.png)
+![Title Screen](http://i.imgur.com/jcPn5.png)
 
 About Ludum Dare
 ====
