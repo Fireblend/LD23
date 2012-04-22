@@ -157,7 +157,7 @@ function loadResources()
 	imgCityDestroy = love.graphics.newImage("gfx/citydestroyframes.png")
 	imgCityDestroy:setFilter("nearest","nearest")
 
-	imgSkyGauge = love.graphics.newImage("gfx/skyfiller.png")
+	imgSkyGauge = love.graphics.newImage("gfx/skyFiller.png")
 	imgSkyGauge:setFilter("nearest","nearest")
 	
 	-- Load sound effects
@@ -172,6 +172,9 @@ function loadResources()
 		auBGM:setVolume(0.8)
 		auBGM:play()
 	end
+
+	font = love.graphics.newFont( "gfx/PressStart2P.ttf", 23 )
+	love.graphics.setFont( font )
 
 end
 
@@ -235,6 +238,10 @@ function restart()
 	dcitiesFrames = {}
 	
 	humanDeaths = 0
+	endGame = false
+	
+	starttime = os.time()
+	newtime = 0
 	
 end
 
@@ -320,7 +327,18 @@ function love.draw()
 	if gamestate == 2 then
 		love.graphics.draw( imgPauseScreen, 0, 0 )
 	end
-
+	
+	--Draw the score
+	love.graphics.print("Score: ", 20,20)
+	love.graphics.print(score, 165,20)
+	
+	love.graphics.print("Time: ", 20, 60)
+	
+	if not endGame then
+		newtime = os.time()-starttime
+	end
+	love.graphics.print(newtime,140,60)
+	
 end
 
 function love.keypressed(key,unicode)
@@ -508,11 +526,22 @@ function love.update(dt)
 		
 		--Check for endgame condition
 		if worldSize < 0.13 then
+			
+			if not endGame then
+				calculateAndHandleScore()
+				endGame = true
+			end
 			initEndGame()
 		end
 		
 	end
 
+
+end
+
+function calculateAndHandleScore()
+
+	score = math.floor(( (180-newtime)/180*7000 ) + score)
 
 end
 
@@ -536,6 +565,8 @@ function initEndGame()
 		cityCount = cityCount - 1
 		auDestroy:stop() auDestroy:play()
 	end
+	
+	auBGM:stop()
 	
 end
 
@@ -579,6 +610,7 @@ function townClean()
 			
 			--Erase city
 			destroyCity(city)
+			score = score + 100
 			table.remove(cities,i)
 			table.remove(citiesLife,i)
 			table.remove(citiesFrames,i)
@@ -594,6 +626,7 @@ function townAttack()
 	for i,city in ipairs(cities) do
 		if (math.rad(rotation*360)+city)%math.rad(360) > math.rad(355.5) or (math.rad(rotation*360)+city)%math.rad(360) < math.rad(4.5) then
 			citiesLife[i] = citiesLife[i]-1
+			score = score + 200
 			auAttack:stop() auAttack:play()
 		end
 	end
@@ -660,6 +693,7 @@ end
 
 --Start Ghost Animation at location
 function death(location)
+	score = score + 50
 	
 	table.insert(ghosts,location)
 	table.insert(ghostHeights,0)
