@@ -160,6 +160,9 @@ function loadResources()
 	imgSkyGauge = love.graphics.newImage("gfx/skyFiller.png")
 	imgSkyGauge:setFilter("nearest","nearest")
 	
+	imgBullet = love.graphics.newImage("gfx/bullet.png")
+	imgBullet:setFilter("nearest","nearest")
+	
 	-- Load sound effects
 	auJump = love.audio.newSource("sfx/jump.wav","static")
 	auAttack = love.audio.newSource("sfx/attack.wav","static")
@@ -237,6 +240,11 @@ function restart()
 	dcities = {}
 	dcitiesFrames = {}
 	
+	--Bullets handling
+	bullets = {}
+	bulletsLife = {}
+	bulletsDirection = {}
+	
 	humanDeaths = 0
 	endGame = false
 	
@@ -312,10 +320,13 @@ function love.draw()
 		love.graphics.drawq( imgMacRF, macFrames[math.floor(frameToDraw)], screenmiddlewidth, macy, 0, 1, 1, 39, 53)
 	end
 	
+	--Draw bullets :D
+	for i,bullet in ipairs(bullets) do
+		love.graphics.draw( imgBullet, screenmiddlewidth, yRef-20, math.rad(rotation*360)+bullet, 1, 1, 15, 43 + yRef-screenmiddleheight-65)		
+	end
+	
 	--Draw the foreground
 	love.graphics.draw( imgForeground, screenmiddlewidth, yRef, math.rad(rotation*360), worldSize, worldSize, imgBackground:getWidth()/2, imgBackground:getHeight()/2 )
-	
-	
 	
 	--Draw the ghosts
 	for i,ghost in ipairs(ghosts) do
@@ -382,13 +393,10 @@ function love.keypressed(key,unicode)
 		
 	end
 	
-	
-	
 end
 
 function love.update(dt)
 
-	
     if gamestate == 1 then
     
 		--Update frame for character animation
@@ -495,9 +503,9 @@ function love.update(dt)
 		cityTimer = cityTimer - dt
 		
 		if worldSize > 0.25 then
-			citiesToBuild = 5
+			citiesToBuild = 1
 		elseif worldSize > 0.14 then	
-			citiesToBuild = 3
+			citiesToBuild = 1
 		elseif worldSize > 0.13 then	
 			citiesToBuild = 1
 		else 
@@ -523,6 +531,9 @@ function love.update(dt)
 
 		--update cities
 		updateCities()
+		
+		--update bullets
+		updateBullets()
 		
 		--Check for endgame condition
 		if worldSize < 0.13 then
@@ -620,6 +631,57 @@ function townClean()
 	end
 end
 
+function fireBullet(location, right)
+
+	table.insert(bulletsLife, 0)
+	if right then
+		table.insert(bullets, location + math.rad(2) )
+	else
+		table.insert(bullets, location + math.rad(-2) )
+	end
+	
+	table.insert(bulletsDirection, right )
+
+end
+
+function updateBullets()
+
+	
+	for i,bullet in ipairs(bullets) do
+	
+		speed = -0.5 -- 1*(1-worldSize)
+
+		if bulletsDirection[i] then	
+			speed = 0.5 --+ 1*(1-worldSize)
+		end
+	
+		bullets[i] = bullets[i] + math.rad(speed)
+		bulletsLife[i] = bulletsLife[i] + 1
+		
+		ang =( math.rad(rotation*360)+math.abs(bullets[i]) ) % math.rad(360)
+		
+		if( ( ang < math.rad(1) or math.rad(359)-ang < math.rad(1) ) and macy > 265 and bulletsLife[i] > 15) then
+			
+			table.remove(bulletsLife, i)
+			table.remove(bullets, i)
+			table.remove(bulletsDirection, i )
+			
+			if 1 - worldSize < 0.045*(worldSize) then
+				worldSize = 1
+			else
+				worldSize = worldSize + 0.045*(worldSize)
+			end
+			
+		elseif bulletsLife[i] > 190 then
+		
+			table.remove(bulletsLife, i)
+			table.remove(bullets, i)
+			table.remove(bulletsDirection, i )
+		end
+	end
+
+end
+
 --Check if a town is being attacked
 function townAttack()
 
@@ -638,7 +700,22 @@ function updateCities()
 	for i,frame in ipairs(citiesFrames) do
 		if citiesFrames[i] < 16 then
 			citiesFrames[i] = frame+1
+		else
+			ang =( math.rad(rotation*360)+math.abs(cities[i]) ) % math.rad(360)
+			
+			if ang < math.rad(30) or math.rad(359)-ang < math.rad(30) then
+				rand = math.random(0,140) 
+				
+				if(rand <= 1) then
+					if(rand%2 == 1) then
+						fireBullet(cities[i], true)
+					else
+						fireBullet(cities[i], false)
+					end
+				end
+			end
 		end
+		
 	end
 	
 end
@@ -674,6 +751,8 @@ function createCity()
 
 	--Add to frameslist
 	table.insert(citiesFrames,0)
+	
+	fireBullet(location, true)
 end
 
 --Create a puny human running for its life
@@ -722,7 +801,7 @@ function updateHumans()
 	
 		ang =( math.rad(rotation*360)+math.abs(humans[i]) ) % math.rad(360)
 		
-		if( ang < math.rad(1) and math.rad(359)-ang > math.rad(358) and not jumping) then
+		if( (ang < math.rad(1) or math.rad(359)-ang < math.rad(1)) and not jumping) then
 			death(humans[i])
 			
 			table.remove(humans, i)
