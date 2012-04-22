@@ -8,6 +8,8 @@ It shouldn't take you too long to get through the whole thing :)
 
 **This is a work in progress!**
 
+![Title Screen](http://i.imgur.com/r6yka.png)
+
 About Ludum Dare
 ====
 
@@ -27,6 +29,8 @@ The Game Engine used for this project is [LÖVE](https://www.love2d.org), an *aw
 Sound Effects generated with [sfxr](http://www.drpetter.se/project_sfxr.html).
 
 BGM generated with Greasemonkey's [Autotracker-Bu Script](http://www.ludumdare.com/compo/2011/12/13/if-you-find-it-hard-to-make-music-read-this/).
+
+The font used, [Press Start 2P](http://www.zone38.net/font/#pressstart) is available under the [SIL Open Font License](http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL).
 
 Finally, thanks to all the friendly people helping me out at LD's IRC room :)
 
